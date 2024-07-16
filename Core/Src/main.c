@@ -100,6 +100,8 @@ int main(void)
   uint8_t str[255];
   uint16_t len;
 
+  uart1_rx.trim_newlines = 1;
+
   while (1)
   {
 	  if(uart_available(&huart1))
@@ -108,6 +110,14 @@ int main(void)
 			prints("Received: ");
 			prints((char*) str);
 			prints("\r\n");
+			char str2[10];
+			for (int i = 0; i < len; i++)
+			{
+				snprintf((char*) str2, 10, "%02X ", str[i]);
+				prints((char*) str2);
+			}
+			prints("\r\n");
+
 	  }
 
     /* USER CODE END WHILE */

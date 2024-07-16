@@ -22,9 +22,13 @@
 
 /* USER CODE BEGIN 0 */
 
-uint8_t uart1_rx_data[UART1_RX_BUFFER_SIZE];
-uint8_t uart1_rx_index = 0;
-uint8_t uart1_rx_available = 0;
+uart_data_t uart1_rx = {
+	.buffer_size = UART1_RX_BUFFER_SIZE,
+	.index = 0,
+	.available = 0,
+	.trim_newlines = 0,
+	.huart = &huart1
+};
 
 /* USER CODE END 0 */
 
@@ -56,7 +60,7 @@ void MX_USART1_UART_Init(void)
   }
   /* USER CODE BEGIN USART1_Init 2 */
 
-	HAL_UART_Receive_IT(&huart1, uart1_rx_data + uart1_rx_index, 1);
+	HAL_UART_Receive_IT(&huart1, uart1_rx.data + uart1_rx.index, 1);
   /* USER CODE END USART1_Init 2 */
 
 }
@@ -121,35 +125,60 @@ void HAL_UART_MspDeInit(UART_HandleTypeDef* uartHandle)
 
 /* USER CODE BEGIN 1 */
 
-HAL_StatusTypeDef uart_print(UART_HandleTypeDef* uartHandle, const char* str)
+HAL_StatusTypeDef uart_print(UART_HandleTypeDef* p_huart, const char* str)
 {
-	return HAL_UART_Transmit(uartHandle, (uint8_t*)str, strlen(str), UART1_TX_TIMEOUT);
+	return HAL_UART_Transmit(p_huart, (uint8_t*)str, strlen(str), UART1_TX_TIMEOUT);
 }
 
-uint16_t uart_available(UART_HandleTypeDef* uartHandle)
+uint16_t uart_available(UART_HandleTypeDef* p_huart)
 {
-	if (uartHandle->Instance == USART1) {
-		return uart1_rx_available;
+	if (p_huart->Instance == USART1) {
+		return uart1_rx.available;
 	}
 	return 0;
 }
 
-uint16_t uart_get_input(UART_HandleTypeDef* uartHandle, uint8_t* str, uint8_t max_len)
+uint16_t uart_get_input(UART_HandleTypeDef* p_huart, uint8_t* str, uint8_t max_len)
 {
-	if (uartHandle->Instance == USART1 && uart1_rx_available) {
-		uint8_t len = uart1_rx_index;
-		if (len > max_len) len = max_len;
-		memcpy(str, uart1_rx_data, len);
-		str[len] = '\0';
-		uart1_rx_index = 0;
-		uart1_rx_available = 0;
-		HAL_UART_Receive_IT(uartHandle, uart1_rx_data + uart1_rx_index, 1);
+	if (p_huart->Instance == USART1 && uart1_rx.available) {
+		uint16_t len = 0;
+		if(str != NULL)
+		{
+			len = uart1_rx.index;
+			if (len > max_len) len = max_len;
+			memcpy(str, uart1_rx.data, len);
+			str[len] = '\0';
+		}
+		uart1_rx.index = 0;
+		uart1_rx.available = 0;
+		HAL_UART_Receive_IT(p_huart, uart1_rx.data + uart1_rx.index, 1);
 		return len;
 	}
 	return 0;
 }
 
+void uart_it(uart_data_t* uart_rx)
+{
 
+	if(uart_rx->index < uart_rx->buffer_size - 1)
+	{
+		uart_rx->index++;
+		if(uart_rx->data[uart_rx->index - 1] == '\n'
+				|| uart_rx->data[uart_rx->index - 1] == '\r'
+				|| uart_rx->index == uart_rx->buffer_size - 1)
+		{
+			// trim trailing newlines and carriage returns
+			while (uart_rx->trim_newlines && uart_rx->index != 0 && (uart_rx->data[uart_rx->index - 1] == '\n' || uart_rx->data[uart_rx->index - 1] == '\r'))
+			{
+				uart_rx->index--;
+			}
+			uart_rx->data[uart_rx->index] = '\0';
+			uart_rx->available = 1;
+		}
+		else HAL_UART_Receive_IT(uart_rx->huart, uart_rx->data + uart_rx->index, 1);
+	}
+	else uart_rx->available = 1;
+}
 
 HAL_StatusTypeDef prints(const char* str)
 {

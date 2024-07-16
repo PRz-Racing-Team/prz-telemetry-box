@@ -209,24 +209,7 @@ void USART1_IRQHandler(void)
   HAL_UART_IRQHandler(&huart1);
   /* USER CODE BEGIN USART1_IRQn 1 */
 
-	if(uart1_rx_index < UART1_RX_BUFFER_SIZE - 1)
-	{
-		uart1_rx_index++;
-		if(uart1_rx_data[uart1_rx_index - 1] == '\n' || uart1_rx_data[uart1_rx_index - 1] == '\r' || uart1_rx_index == UART1_RX_BUFFER_SIZE - 1)
-		{
-			// trim trailing newlines and carriage returns
-			while (uart1_rx_index != 0 && (uart1_rx_data[uart1_rx_index - 1] == '\n' || uart1_rx_data[uart1_rx_index - 1] == '\r'))
-			{
-				uart1_rx_index--;
-			}
-			uart1_rx_data[uart1_rx_index] = '\0';
-			uart1_rx_available = 1;
-		}
-		else HAL_UART_Receive_IT(&huart1, uart1_rx_data + uart1_rx_index, 1);
-	}
-	else uart1_rx_available = 1;
-
-
+  uart_it(&uart1_rx);
   /* USER CODE END USART1_IRQn 1 */
 }
 

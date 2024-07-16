@@ -43,9 +43,17 @@ extern UART_HandleTypeDef huart1;
 #define UART1_TX_TIMEOUT 1000
 
 
-extern uint8_t uart1_rx_data[UART1_RX_BUFFER_SIZE];
-extern uint8_t uart1_rx_index;
-extern uint8_t uart1_rx_available;
+typedef struct {
+	uint16_t buffer_size;
+	uint16_t index;
+	uint8_t available;
+	uint8_t trim_newlines;
+
+	uint8_t data[UART1_RX_BUFFER_SIZE];
+	UART_HandleTypeDef* huart;
+} uart_data_t;
+
+extern uart_data_t uart1_rx;
 
 /* USER CODE END Private defines */
 
@@ -53,9 +61,10 @@ void MX_USART1_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
 
-HAL_StatusTypeDef uart_print(UART_HandleTypeDef* uartHandle, const char* str);
-uint16_t uart1_available(UART_HandleTypeDef* uartHandle);
-uint16_t uart1_get_input(UART_HandleTypeDef* uartHandle, uint8_t* str, uint8_t max_len);
+HAL_StatusTypeDef uart_print(UART_HandleTypeDef* p_huart, const char* str);
+uint16_t uart_available(UART_HandleTypeDef* p_huart);
+uint16_t uart_get_input(UART_HandleTypeDef* p_huart, uint8_t* str, uint8_t max_len);
+void uart_it(uart_data_t* uart_rx);
 
 HAL_StatusTypeDef prints(const char* str);
 
