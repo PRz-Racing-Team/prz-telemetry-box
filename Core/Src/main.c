@@ -18,6 +18,7 @@
 /* USER CODE END Header */
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
+#include "dma.h"
 #include "usart.h"
 #include "gpio.h"
 
@@ -49,6 +50,7 @@
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
+static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -87,7 +89,12 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_DMA_Init();
   MX_USART1_UART_Init();
+  MX_USART2_UART_Init();
+
+  /* Initialize interrupts */
+  MX_NVIC_Init();
   /* USER CODE BEGIN 2 */
 
   prints("PRz Telemetry Box 4.0\r\n");
@@ -97,28 +104,54 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-  uint8_t str[255];
-  uint16_t len;
+#define RX_BUF_SIZE 255
+  	uint8_t rx_buf[RX_BUF_SIZE];
+  	uint16_t rx_index = 0;
 
-  uart1_rx.trim_newlines = 1;
+	uint8_t str[255];
+	uint16_t len;
 
-  while (1)
-  {
-	  if(uart_available(&huart1))
-	  {
-			len = uart_get_input(&huart1, str, 255);
-			prints("Received: ");
+	uart1_cfg.trim_newlines = 1;
+
+	while (1)
+	{
+		if(uart_available(&huart1))
+		{
+			len = uart_get_input(&huart1, rx_buf + rx_index, RX_BUF_SIZE - rx_index - 1);
+			if(len == 0) continue;
+			rx_index += len;
+			if (rx_buf[rx_index - 1] == '\n' || rx_buf[rx_index - 1] == '\r') {
+				rx_buf[rx_index - 1] = 0;
+				rx_index = 0;
+			}
+			else continue;
+
+			prints("U1: ");
+			prints((char*) rx_buf);
+			prints("\r\n");
+
+			uint32_t baud_rate = atoi((char*) rx_buf);
+			if (baud_rate == 115200 || baud_rate == 921600)
+			{
+				snprintf((char*) str, 255, "Changing baud rate to %ld\r\n", baud_rate);
+				prints((char*) str);
+				uart_set_baudrate(&huart2, baud_rate);
+			}
+			else
+			{
+				uart_print(&huart2, (char*) rx_buf);
+				uart_print(&huart2, "\r\n");
+			}
+
+		}
+		if(uart_available(&huart2))
+		{
+			len = uart_get_input(&huart2, str, 255);
+			if(!len) continue;
+			prints("GSM: ");
 			prints((char*) str);
 			prints("\r\n");
-			char str2[10];
-			for (int i = 0; i < len; i++)
-			{
-				snprintf((char*) str2, 10, "%02X ", str[i]);
-				prints((char*) str2);
-			}
-			prints("\r\n");
-
-	  }
+		}
 
     /* USER CODE END WHILE */
 
@@ -172,6 +205,26 @@ void SystemClock_Config(void)
   {
     Error_Handler();
   }
+}
+
+/**
+  * @brief NVIC Configuration.
+  * @retval None
+  */
+static void MX_NVIC_Init(void)
+{
+  /* USART1_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(USART1_IRQn);
+  /* USART2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(USART2_IRQn);
+  /* DMA1_Stream5_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
+  /* DMA2_Stream2_IRQn interrupt configuration */
+  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
+  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
 }
 
 /* USER CODE BEGIN 4 */
