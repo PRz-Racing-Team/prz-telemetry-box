@@ -19,11 +19,13 @@
 /* Includes ------------------------------------------------------------------*/
 #include "main.h"
 #include "dma.h"
+#include "tim.h"
 #include "usart.h"
 #include "gpio.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
+
 
 /* USER CODE END Includes */
 
@@ -46,11 +48,14 @@
 
 /* USER CODE BEGIN PV */
 
+uart_receiver_t usart1_rcvr;
+uart_receiver_t usart2_rcvr;
+uart_receiver_t uart7_rcvr;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
-static void MX_NVIC_Init(void);
 /* USER CODE BEGIN PFP */
 
 /* USER CODE END PFP */
@@ -92,13 +97,24 @@ int main(void)
   MX_DMA_Init();
   MX_USART1_UART_Init();
   MX_USART2_UART_Init();
-
-  /* Initialize interrupts */
-  MX_NVIC_Init();
+  MX_TIM2_Init();
+  MX_UART7_Init();
   /* USER CODE BEGIN 2 */
 
-  prints("PRz Telemetry Box 4.0\r\n");
+	UartRcvr_init(&usart1_rcvr, &huart1);
+	UartRcvr_init(&usart2_rcvr, &huart2);
+	UartRcvr_init(&uart7_rcvr, &huart7);
 
+	FT_ERR ft_err = FT_InitCustom(&ft, &huart1, &htim2, 10000);
+	if(ft_err != FT_OK)
+	{
+		prints("FT_InitCustom failed\r\n");
+		return 1;
+	}
+
+	prints("PRz Telemetry Box 4.0\r\n");
+
+	HAL_Delay(1000);
   /* USER CODE END 2 */
 
   /* Infinite loop */
@@ -108,16 +124,20 @@ int main(void)
   	uint8_t rx_buf[RX_BUF_SIZE];
   	uint16_t rx_index = 0;
 
-	uint8_t str[255];
+#define STR_BUF_SIZE 512
+	uint8_t str[STR_BUF_SIZE];
 	uint16_t len;
 
-	uart1_cfg.trim_newlines = 1;
+
+
+	FT_PrintConfiguration(ft, (char*)str, 2048);
+	prints((char*) str);
 
 	while (1)
 	{
-		if(uart_available(&huart1))
+		if(UartRcvr_available(&usart1_rcvr))
 		{
-			len = uart_get_input(&huart1, rx_buf + rx_index, RX_BUF_SIZE - rx_index - 1);
+			len = UartRcvr_get_input(&usart1_rcvr, rx_buf + rx_index, RX_BUF_SIZE - rx_index - 1);
 			if(len == 0) continue;
 			rx_index += len;
 			if (rx_buf[rx_index - 1] == '\n' || rx_buf[rx_index - 1] == '\r') {
@@ -133,7 +153,7 @@ int main(void)
 			uint32_t baud_rate = atoi((char*) rx_buf);
 			if (baud_rate == 115200 || baud_rate == 921600)
 			{
-				snprintf((char*) str, 255, "Changing baud rate to %ld\r\n", baud_rate);
+				snprintf((char*) str, STR_BUF_SIZE, "Changing baud rate to %ld\r\n", baud_rate);
 				prints((char*) str);
 				uart_set_baudrate(&huart2, baud_rate);
 			}
@@ -144,13 +164,11 @@ int main(void)
 			}
 
 		}
-		if(uart_available(&huart2))
+		if(UartRcvr_available(&usart2_rcvr))
 		{
-			len = uart_get_input(&huart2, str, 255);
-			if(!len) continue;
-			prints("GSM: ");
+			len = UartRcvr_get_input(&usart2_rcvr, str, STR_BUF_SIZE);
 			prints((char*) str);
-			prints("\r\n");
+			//prints("\r\n\r\n");
 		}
 
     /* USER CODE END WHILE */
@@ -207,31 +225,34 @@ void SystemClock_Config(void)
   }
 }
 
-/**
-  * @brief NVIC Configuration.
-  * @retval None
-  */
-static void MX_NVIC_Init(void)
-{
-  /* USART1_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART1_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(USART1_IRQn);
-  /* USART2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(USART2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(USART2_IRQn);
-  /* DMA1_Stream5_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA1_Stream5_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA1_Stream5_IRQn);
-  /* DMA2_Stream2_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(DMA2_Stream2_IRQn, 0, 0);
-  HAL_NVIC_EnableIRQ(DMA2_Stream2_IRQn);
-}
-
 /* USER CODE BEGIN 4 */
 
-
-
-
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
+{
+    if(huart->Instance == USART1)
+    {
+    	UartRcvr_it_trigger(&usart1_rcvr, size);
+    	if(huart->RxEventType == HAL_UART_RXEVENT_IDLE)
+    	{
+    		UartRcvr_it_swap(&usart1_rcvr);
+    	}
+    }
+    else if (huart->Instance == USART2)
+    {
+    	UartRcvr_it_trigger(&usart2_rcvr, size);
+    	if(huart->RxEventType == HAL_UART_RXEVENT_IDLE)
+    	{
+    		UartRcvr_it_swap(&usart2_rcvr);
+    	}
+	}
+    else if (huart->Instance == UART7) {
+		UartRcvr_it_trigger(&uart7_rcvr, size);
+		if (huart->RxEventType == HAL_UART_RXEVENT_IDLE)
+		{
+			UartRcvr_it_swap(&uart7_rcvr);
+		}
+	}
+}
 
 
 

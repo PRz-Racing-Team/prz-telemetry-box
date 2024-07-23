@@ -35,6 +35,9 @@ extern "C" {
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "../uart_receiver/uart_receiver.h"
+#include "../fancy_timer/fancy_timer.h"
+
 /* USER CODE END Includes */
 
 /* Exported types ------------------------------------------------------------*/

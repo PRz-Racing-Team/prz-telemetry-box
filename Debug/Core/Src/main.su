@@ -1,4 +1,4 @@
-../Core/Src/main.c:67:5:main	528	static
-../Core/Src/main.c:168:6:SystemClock_Config	88	static
-../Core/Src/main.c:214:13:MX_NVIC_Init	8	static
-../Core/Src/main.c:247:6:Error_Handler	4	static,ignoring_inline_asm
+../Core/Src/main.c:72:5:main	792	static
+../Core/Src/main.c:186:6:SystemClock_Config	88	static
+../Core/Src/main.c:230:6:HAL_UARTEx_RxEventCallback	16	static
+../Core/Src/main.c:268:6:Error_Handler	4	static,ignoring_inline_asm

@@ -1,0 +1,7 @@
+../Core/uart_receiver/uart_receiver.c:10:9:UartRcvr_init	16	static
+../Core/uart_receiver/uart_receiver.c:37:6:UartRcvr_deinit	24	static
+../Core/uart_receiver/uart_receiver.c:49:9:UartRcvr_available	16	static
+../Core/uart_receiver/uart_receiver.c:62:10:UartRcvr_get_input	32	static
+../Core/uart_receiver/uart_receiver.c:82:6:UartRcvr_it_swap	32	static
+../Core/uart_receiver/uart_receiver.c:101:6:UartRcvr_it_process	24	static
+../Core/uart_receiver/uart_receiver.c:117:6:UartRcvr_it_trigger	16	static

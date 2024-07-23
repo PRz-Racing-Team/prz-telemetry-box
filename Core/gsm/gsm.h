@@ -8,6 +8,11 @@
 #ifndef GSM__H_
 #define GSM__H_
 
+#include "gsm_defines_errors.h"
+
+
+
+
 
 
 
