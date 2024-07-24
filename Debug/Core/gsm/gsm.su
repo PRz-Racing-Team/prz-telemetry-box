@@ -1,0 +1,14 @@
+../Core/gsm/gsm.c:10:9:GSM_cmd	32	static
+../Core/gsm/gsm.c:18:9:GSM_str	16	static
+../Core/gsm/gsm.c:26:9:GSM_Prints	24	static
+../Core/gsm/gsm.c:36:9:GSM_at	32	static
+../Core/gsm/gsm.c:61:9:GSM_Feed	40	static
+../Core/gsm/gsm.c:119:9:GSM_AwaitResponse	16	static
+../Core/gsm/gsm.c:140:9:GSM_ProcessInput	16	static
+../Core/gsm/gsm.c:191:9:GSM_InitModem	16	static
+../Core/gsm/gsm.c:277:9:GSM_SetBaudRate	24	static
+../Core/gsm/gsm.c:303:9:GSM_ChangeBaudRate	24	static
+../Core/gsm/gsm.c:313:9:GSM_Init	32	static
+../Core/gsm/gsm.c:338:9:GSM_DeInit	16	static
+../Core/gsm/gsm.c:356:9:GSM_ClearResponse	16	static
+../Core/gsm/gsm.c:379:9:GSM_GetLine	16	static

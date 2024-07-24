@@ -3,7 +3,3 @@
 ../Core/Src/usart.c:93:6:MX_USART2_UART_Init	2
 ../Core/Src/usart.c:121:6:HAL_UART_MspInit	7
 ../Core/Src/usart.c:265:6:HAL_UART_MspDeInit	4
-../Core/Src/usart.c:342:19:uart_send_char	1
-../Core/Src/usart.c:348:19:uart_print	1
-../Core/Src/usart.c:353:6:uart_set_baudrate	4
-../Core/Src/usart.c:383:19:prints	1

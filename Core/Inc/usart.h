@@ -42,8 +42,6 @@ extern UART_HandleTypeDef huart2;
 
 /* USER CODE BEGIN Private defines */
 
-#define UART_TX_TIMEOUT 100
-
 /* USER CODE END Private defines */
 
 void MX_UART7_Init(void);
@@ -51,12 +49,6 @@ void MX_USART1_UART_Init(void);
 void MX_USART2_UART_Init(void);
 
 /* USER CODE BEGIN Prototypes */
-
-HAL_StatusTypeDef uart_send_char(UART_HandleTypeDef* p_huart, char c);
-HAL_StatusTypeDef uart_print(UART_HandleTypeDef* p_huart, const char* str);
-void uart_set_baudrate(UART_HandleTypeDef* p_huart, uint32_t baud_rate);
-
-HAL_StatusTypeDef prints(const char* str);
 
 /* USER CODE END Prototypes */
 

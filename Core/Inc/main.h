@@ -37,6 +37,7 @@ extern "C" {
 
 #include "../uart_receiver/uart_receiver.h"
 #include "../fancy_timer/fancy_timer.h"
+#include "../gsm/gsm.h"
 
 /* USER CODE END Includes */
 

@@ -32,6 +32,30 @@
 #define	GSM_INVALID_ARGUMENT				GSM_ERR_(0x03)
 #define GSM_INVALID_ARGUMENT_STR			"GSM_INVALID_ARGUMENT"
 
+#define GSM_IDLE                            GSM_ERR_(0x04)
+#define GSM_IDLE_STR                        "GMS_IDLE"
+
+#define GSM_BUSY                            GSM_ERR_(0x05)
+#define GSM_BUSY_STR                        "GSM_BUSY"
+
+#define GSM_TIMEOUT                         GSM_ERR_(0x06)
+#define GSM_TIMEOUT_STR                     "GSM_TIMEOUT"
+
+#define GSM_BAUD_RATE_ERR	            	GSM_ERR_(0x07)
+#define GSM_BAUD_RATE_ERR_STR				"GSM_BAUD_RATE_ERR"
+
+
+
+#define GSM_FT_ERR							GSM_ERR_(0x10)
+#define GSM_FT_ERR_STR						"GSM_FT_ERR"
+
+
+#define GSM_LINE_NO_DATA					GSM_ERR_(0x20)
+#define GSM_LINE_NO_DATA_STR				"GSM_LINE_NO_DATA"
+
+
+#define GSM_AT_ERR							GSM_ERR_(0x30)
+#define GSM_AT_ERR_STR						"GSM_AT_ERR"
 
 
 #define	GSM_HAL_ERR							GSM_ERR_(0x51)

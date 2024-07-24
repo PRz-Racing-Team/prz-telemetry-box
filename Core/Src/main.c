@@ -52,16 +52,30 @@ uart_receiver_t usart1_rcvr;
 uart_receiver_t usart2_rcvr;
 uart_receiver_t uart7_rcvr;
 
+gsm_t gsm;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 void SystemClock_Config(void);
 /* USER CODE BEGIN PFP */
 
+HAL_StatusTypeDef prints(const char* str);
+
 /* USER CODE END PFP */
 
 /* Private user code ---------------------------------------------------------*/
 /* USER CODE BEGIN 0 */
+
+
+#define RX_BUF_SIZE 255
+  	uint8_t rx_buf[RX_BUF_SIZE];
+  	uint16_t rx_index = 0;
+
+#define STR_BUF_SIZE 512
+	uint8_t str[STR_BUF_SIZE];
+	uint16_t len;
+
 
 /* USER CODE END 0 */
 
@@ -109,7 +123,7 @@ int main(void)
 	if(ft_err != FT_OK)
 	{
 		prints("FT_InitCustom failed\r\n");
-		return 1;
+		Error_Handler();
 	}
 
 	prints("PRz Telemetry Box 4.0\r\n");
@@ -120,21 +134,23 @@ int main(void)
   /* Infinite loop */
   /* USER CODE BEGIN WHILE */
 
-#define RX_BUF_SIZE 255
-  	uint8_t rx_buf[RX_BUF_SIZE];
-  	uint16_t rx_index = 0;
-
-#define STR_BUF_SIZE 512
-	uint8_t str[STR_BUF_SIZE];
-	uint16_t len;
-
-
-
 	FT_PrintConfiguration(ft, (char*)str, 2048);
 	prints((char*) str);
 
+	GSM_ERR gsm_err = GSM_Init(&gsm, ft, &usart2_rcvr, &usart1_rcvr);
+	if (gsm_err != GSM_OK) {
+		prints("GSM_Init failed\r\n");
+		Error_Handler();
+	}
+
 	while (1)
 	{
+		while ((gsm_err = GSM_Feed(&gsm)) != GSM_IDLE) {
+			if (gsm_err == GSM_NOT_INITIALIZED || gsm_err == GSM_INVALID_ARGUMENT) {
+				prints("GSM_Feed failed\r\n");
+			}
+		}
+
 		if(UartRcvr_available(&usart1_rcvr))
 		{
 			len = UartRcvr_get_input(&usart1_rcvr, rx_buf + rx_index, RX_BUF_SIZE - rx_index - 1);
@@ -155,21 +171,24 @@ int main(void)
 			{
 				snprintf((char*) str, STR_BUF_SIZE, "Changing baud rate to %ld\r\n", baud_rate);
 				prints((char*) str);
-				uart_set_baudrate(&huart2, baud_rate);
+				UartRcvr_set_baud_rate(&usart2_rcvr, baud_rate);
 			}
 			else
 			{
-				uart_print(&huart2, (char*) rx_buf);
-				uart_print(&huart2, "\r\n");
+				snprintf((char*) str, STR_BUF_SIZE, "%s\r\n", rx_buf);
+				GSM_at(&gsm, (const char*)str, 1, 1000);
 			}
 
 		}
-		if(UartRcvr_available(&usart2_rcvr))
-		{
-			len = UartRcvr_get_input(&usart2_rcvr, str, STR_BUF_SIZE);
-			prints((char*) str);
-			//prints("\r\n\r\n");
-		}
+//		while(UartRcvr_available(&usart2_rcvr))
+//		{
+//			len = UartRcvr_get_input(&usart2_rcvr, str, STR_BUF_SIZE - 1);
+//			if (len == 0) continue;
+//			str[len] = 0;
+//			prints("GSM: ");
+//			prints((char*) str);
+//			prints("\r\n");
+//		}
 
     /* USER CODE END WHILE */
 
@@ -254,7 +273,21 @@ void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size)
 	}
 }
 
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart) {
+	if (huart->Instance == USART1) {
+		UartRcvr_it_error(&usart1_rcvr);
+	} else if (huart->Instance == USART2) {
+		UartRcvr_it_error(&usart2_rcvr);
+	} else if (huart->Instance == UART7) {
+		UartRcvr_it_error(&uart7_rcvr);
+	}
+}
 
+
+HAL_StatusTypeDef prints(const char* str)
+{
+	return UartRcvr_print(&usart1_rcvr, str);
+}
 
 
 
@@ -269,7 +302,11 @@ void Error_Handler(void)
 {
   /* USER CODE BEGIN Error_Handler_Debug */
   /* User can add his own implementation to report the HAL error return state */
-  __disable_irq();
+	__disable_irq();
+	prints("Error_Handler\r\n");
+	HAL_Delay(10000);
+	// restart the MCU
+	NVIC_SystemReset();
   while (1)
   {
   }

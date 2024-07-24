@@ -26,7 +26,6 @@ Core/Src \
 Core/Startup \
 Core/fancy_timer \
 Core/gsm \
-Core/line_collector \
 Core/uart_receiver \
 Drivers/STM32F4xx_HAL_Driver/Src \
 

@@ -149,12 +149,19 @@ FT_ERR FT_GetTriggeredTimerAny(FT_base* ft, uint16_t* id, uint16_t* trigger_coun
 
 FT_ERR FT_GetErroredTimer(FT_base* ft, uint16_t* id, uint16_t* error_count);
 
+FT_ERR FT_SetTimerInterval(FT_base* ft, uint16_t timer_id, uint32_t interval);
 FT_ERR FT_SetTimerPriority(FT_base* ft, uint16_t timer_id, uint16_t priority);
 FT_ERR FT_SetTimerTimeBase(FT_base* ft, uint16_t timer_id, uint32_t time);
 
 FT_ERR FT_SetTimerPauseState(FT_base* ft, uint16_t timer_id, uint8_t state);
 FT_ERR FT_PauseTimer(FT_base* ft, uint16_t timer_id);
 FT_ERR FT_ResumeTimer(FT_base* ft, uint16_t timer_id);
+
+FT_ERR FT_StartTimer(FT_base* ft, uint16_t timer_id);
+FT_ERR FT_StopTimer(FT_base* ft, uint16_t timer_id);
+
+FT_ERR FT_ResetTimer(FT_base* ft, uint16_t timer_id);
+FT_ERR FT_ClearTimer(FT_base* ft, uint16_t timer_id);
 
 FT_ERR FT_NewTimer(FT_base* ft, uint32_t time, uint16_t priority, uint16_t* timer_id);
 

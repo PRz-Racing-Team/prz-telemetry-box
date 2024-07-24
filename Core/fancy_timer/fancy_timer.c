@@ -459,6 +459,18 @@ FT_ERR FT_GetErroredTimer(FT_base* ft, uint16_t* id, uint16_t* last_error)
 	return FT_NO_TIMER;
 }
 
+FT_ERR FT_SetTimerInterval(FT_base* ft, uint16_t timer_id, uint32_t interval)
+{
+	if (ft == NULL) return FT_INVALID_ARGUMENT;
+	ft_def *timer = NULL;
+	FT_ERR res = FT_GetTimer_(ft, timer_id, &timer);
+	if (res == FT_OK) {
+		timer->requested_time = interval;
+		return FT_OK;
+	}
+	return res;
+}
+
 FT_ERR FT_SetTimerPriority(FT_base* ft, uint16_t timer_id, uint16_t priority)
 {
 	if(ft == NULL) return FT_INVALID_ARGUMENT;
@@ -483,6 +495,27 @@ FT_ERR FT_SetTimerTimeBase(FT_base* ft, uint16_t timer_id, uint32_t time)
 	return res;
 }
 
+FT_ERR FT_ResetTimer(FT_base* ft, uint16_t timer_id)
+{
+	if (ft == NULL) return FT_INVALID_ARGUMENT;
+	ft_def *timer = NULL;
+	FT_ERR res = FT_GetTimer_(ft, timer_id, &timer);
+	if (res == FT_OK) {
+		timer->elapsed_time = 0;
+		timer->trigger_counter = 0;
+		timer->last_error = FT_OK;
+		return FT_OK;
+	}
+	return res;
+}
+
+FT_ERR FT_ClearTimer(FT_base* ft, uint16_t timer_id)
+{
+	FT_ERR err = FT_PauseTimer(ft, timer_id);
+	if(err == FT_OK) err = FT_ResetTimer(ft, timer_id);
+	return err;
+}
+
 FT_ERR FT_SetTimerPauseState(FT_base* ft, uint16_t timer_id, uint8_t state)
 {
 	if(ft == NULL) return FT_INVALID_ARGUMENT;
@@ -503,6 +536,36 @@ FT_ERR FT_PauseTimer(FT_base* ft, uint16_t timer_id)
 FT_ERR FT_ResumeTimer(FT_base* ft, uint16_t timer_id)
 {
 	return FT_SetTimerPauseState(ft, timer_id, 0);
+}
+
+FT_ERR FT_StartTimer(FT_base* ft, uint16_t timer_id)
+{
+	if(ft == NULL) return FT_INVALID_ARGUMENT;
+	ft_def* timer = NULL;
+	FT_ERR res = FT_GetTimer_(ft, timer_id, &timer);
+	if (res == FT_OK) {
+		timer->elapsed_time = 0;
+		timer->trigger_counter = 0;
+		timer->last_error = FT_OK;
+		timer->paused = 0;
+		return FT_OK;
+	}
+	return res;
+}
+
+FT_ERR FT_StopTimer(FT_base* ft, uint16_t timer_id)
+{
+	if (ft == NULL) return FT_INVALID_ARGUMENT;
+	ft_def *timer = NULL;
+	FT_ERR res = FT_GetTimer_(ft, timer_id, &timer);
+	if (res == FT_OK) {
+		timer->elapsed_time = 0;
+		timer->trigger_counter = 0;
+		timer->last_error = FT_OK;
+		timer->paused = 1;
+		return FT_OK;
+	}
+	return res;
 }
 
 FT_ERR FT_NewTimer(FT_base* ft, uint32_t time, uint16_t priority, uint16_t* timer_id)

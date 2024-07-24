@@ -2,6 +2,11 @@
 ../Core/uart_receiver/uart_receiver.c:37:6:UartRcvr_deinit	24	static
 ../Core/uart_receiver/uart_receiver.c:49:9:UartRcvr_available	16	static
 ../Core/uart_receiver/uart_receiver.c:62:10:UartRcvr_get_input	32	static
-../Core/uart_receiver/uart_receiver.c:82:6:UartRcvr_it_swap	32	static
-../Core/uart_receiver/uart_receiver.c:101:6:UartRcvr_it_process	24	static
-../Core/uart_receiver/uart_receiver.c:117:6:UartRcvr_it_trigger	16	static
+../Core/uart_receiver/uart_receiver.c:89:9:UartRcvr_set_baud_rate	32	static,ignoring_inline_asm
+../Core/uart_receiver/uart_receiver.c:127:19:UartRcvr_send_char	16	static
+../Core/uart_receiver/uart_receiver.c:133:19:UartRcvr_send	24	static
+../Core/uart_receiver/uart_receiver.c:139:19:UartRcvr_print	16	static
+../Core/uart_receiver/uart_receiver.c:144:6:UartRcvr_it_swap	32	static
+../Core/uart_receiver/uart_receiver.c:164:6:UartRcvr_it_process	24	static
+../Core/uart_receiver/uart_receiver.c:180:6:UartRcvr_it_trigger	16	static
+../Core/uart_receiver/uart_receiver.c:201:6:UartRcvr_it_error	16	static

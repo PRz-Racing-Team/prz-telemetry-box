@@ -30,8 +30,11 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
  ../Core/Inc/../uart_receiver/uart_receiver.h \
  ../Core/Inc/../fancy_timer/fancy_timer.h \
  ../Core/Inc/../fancy_timer/fancy_timer_defines_errors.h \
- ../Core/Inc/dma.h ../Core/Inc/main.h ../Core/Inc/tim.h \
- ../Core/Inc/usart.h ../Core/Inc/gpio.h
+ ../Core/Inc/../gsm/gsm.h ../Core/Inc/../gsm/../fancy_timer/fancy_timer.h \
+ ../Core/Inc/../gsm/../uart_receiver/uart_receiver.h \
+ ../Core/Inc/../gsm/gsm_defines_errors.h ../Core/Inc/dma.h \
+ ../Core/Inc/main.h ../Core/Inc/tim.h ../Core/Inc/usart.h \
+ ../Core/Inc/gpio.h
 ../Core/Inc/main.h:
 ../Drivers/STM32F4xx_HAL_Driver/Inc/stm32f4xx_hal.h:
 ../Core/Inc/stm32f4xx_hal_conf.h:
@@ -64,6 +67,10 @@ Core/Src/main.o: ../Core/Src/main.c ../Core/Inc/main.h \
 ../Core/Inc/../uart_receiver/uart_receiver.h:
 ../Core/Inc/../fancy_timer/fancy_timer.h:
 ../Core/Inc/../fancy_timer/fancy_timer_defines_errors.h:
+../Core/Inc/../gsm/gsm.h:
+../Core/Inc/../gsm/../fancy_timer/fancy_timer.h:
+../Core/Inc/../gsm/../uart_receiver/uart_receiver.h:
+../Core/Inc/../gsm/gsm_defines_errors.h:
 ../Core/Inc/dma.h:
 ../Core/Inc/main.h:
 ../Core/Inc/tim.h:
