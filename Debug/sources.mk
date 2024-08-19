@@ -24,7 +24,9 @@ C_DEPS :=
 SUBDIRS := \
 Core/Src \
 Core/Startup \
+Core/circular_buffers \
 Core/fancy_timer \
+Core/frame_collector \
 Core/gsm \
 Core/uart_receiver \
 Drivers/STM32F4xx_HAL_Driver/Src \

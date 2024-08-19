@@ -1,0 +1,6 @@
+../Core/circular_buffers/can_frames_cb.c:10:9:CFCB_Init	2
+../Core/circular_buffers/can_frames_cb.c:19:9:CFCB_IsEmpty	2
+../Core/circular_buffers/can_frames_cb.c:25:9:CFCB_IsFull	2
+../Core/circular_buffers/can_frames_cb.c:31:10:CFCB_GetSize	2
+../Core/circular_buffers/can_frames_cb.c:37:9:CFCB_Push	4
+../Core/circular_buffers/can_frames_cb.c:55:9:CFCB_Pop	4

@@ -61,6 +61,11 @@ void Error_Handler(void);
 
 /* USER CODE BEGIN EFP */
 
+void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan);
+void HAL_UARTEx_RxEventCallback(UART_HandleTypeDef *huart, uint16_t size);
+void HAL_UART_ErrorCallback(UART_HandleTypeDef *huart);
+HAL_StatusTypeDef prints(const char* str);
+
 /* USER CODE END EFP */
 
 /* Private defines -----------------------------------------------------------*/

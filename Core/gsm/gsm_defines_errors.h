@@ -70,6 +70,8 @@
 #define	GSM_HAL_UNKNOWN						GSM_ERR_(0x54)
 #define GSM_HAL_UNKNOWN_STR					"GSM_HAL_UNKNOWN"
 
+#define GSM_ERROR                           GSM_ERR_(0xFF)
+#define GSM_ERROR_STR                       "GSM_ERROR"
 
 
 #endif /* GSM_DEFINES_ERRORS__H_ */

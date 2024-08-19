@@ -1,0 +1,6 @@
+../Core/circular_buffers/can_frames_cb.c:10:9:CFCB_Init	16	static
+../Core/circular_buffers/can_frames_cb.c:19:9:CFCB_IsEmpty	16	static
+../Core/circular_buffers/can_frames_cb.c:25:9:CFCB_IsFull	16	static
+../Core/circular_buffers/can_frames_cb.c:31:10:CFCB_GetSize	16	static
+../Core/circular_buffers/can_frames_cb.c:37:9:CFCB_Push	32	static,ignoring_inline_asm
+../Core/circular_buffers/can_frames_cb.c:55:9:CFCB_Pop	24	static

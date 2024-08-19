@@ -2,7 +2,7 @@
  * fancy_timer_defines_errors.h
  *
  *  Created on: May 20, 2024
- *      Author: Dariusz Strojny/@ReijiY
+ *      Author: Dariusz Strojny @ReijiY
  */
 
 #ifndef FANCY_TIMER_DEFINES_ERRORS_H_

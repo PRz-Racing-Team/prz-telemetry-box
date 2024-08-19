@@ -2,7 +2,7 @@
  * fancy-timer.c
  *
  *  Created on: Feb 16, 2024
- *      Author: ReijiY
+ *      Author: Dariusz Strojny @ReijiY
  */
 
 #include "../fancy_timer/fancy_timer.h"

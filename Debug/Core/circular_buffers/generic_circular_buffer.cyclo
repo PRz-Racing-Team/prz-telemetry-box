@@ -1,0 +1,7 @@
+../Core/circular_buffers/generic_circular_buffer.c:11:9:GCB_Init	4
+../Core/circular_buffers/generic_circular_buffer.c:26:6:GCB_Free	3
+../Core/circular_buffers/generic_circular_buffer.c:34:9:GCB_IsEmpty	2
+../Core/circular_buffers/generic_circular_buffer.c:40:9:GCB_IsFull	3
+../Core/circular_buffers/generic_circular_buffer.c:46:10:GCB_GetSize	3
+../Core/circular_buffers/generic_circular_buffer.c:52:9:GCB_Push	3
+../Core/circular_buffers/generic_circular_buffer.c:60:7:GCB_Pop	3

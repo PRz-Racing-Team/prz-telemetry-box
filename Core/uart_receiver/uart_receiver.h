@@ -11,10 +11,10 @@
 
 #define UART_RECEIVER_CIRCULAR_BUFFER_SIZE (512 * sizeof(uint8_t))
 // max size + null terminator
-#define UART_RECEIVER_MAX_BUFFER_LENGTH (256 * sizeof(uint8_t))
-#define UART_RECEIVER_MAX_BUFFERS 10
+#define UART_RECEIVER_MAX_BUFFER_LENGTH (2048 * sizeof(uint8_t))
+#define UART_RECEIVER_MAX_BUFFERS 5
 
-#define UART_TX_TIMEOUT 100
+#define UART_TX_TIMEOUT 1000
 
 #include <stdlib.h>
 #include <stdint.h>
