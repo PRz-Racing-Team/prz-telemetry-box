@@ -46,9 +46,11 @@ GSM_ERR GSM_atData(gsm_t *gsm, const uint8_t* at_cmd, uint16_t len, uint8_t resp
 	if (gsm == NULL || at_cmd == NULL) return GSM_INVALID_ARGUMENT;
 	if (gsm->ft == NULL || gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
 
-	//GSM_Prints(gsm, ">> ");
-	//GSM_PrintsData(gsm, at_cmd, len);
+	GSM_Prints(gsm, ">> ");
+	GSM_PrintsData(gsm, at_cmd, len);
+	GSM_Prints(gsm, "\r\n");
 
+	FT_StopTimer(gsm->ft, gsm->timers.timeout);
 	GSM_ClearResponse(gsm);
 
 	if (response_expected == 1)
@@ -91,37 +93,41 @@ GSM_ERR GSM_Feed(gsm_t *gsm)
 			gsm->flags.response.timeout = 1;
 			gsm->flags.timeout_count++;
 
-			FT_StopTimer(gsm->ft, gsm->timers.timeout);
+			// FT_StopTimer(gsm->ft, gsm->timers.timeout);
 
-			if(gsm->flags.timeout_count >= 5)
+			if (gsm->flags.timeout_count >= 5)
 			{
 				gsm->flags.detected = 0;
 				gsm->flags.initialized = 0;
-				FT_StartTimer(gsm->ft, gsm->timers.detect);
+
+				uint8_t timeout_paused;
+				if(FT_GetTimerPauseState(ft, gsm->timers.timeout, &timeout_paused) != FT_OK) return GSM_FT_ERR;
+				if(timeout_paused) FT_StartTimer(gsm->ft, gsm->timers.timeout);
 			}
 
 		}
 		else if (gsm->timer_id == gsm->timers.detect)
 		{
 			if(gsm->flags.response.awaiting == 1) continue;
-//			GSM_Prints(gsm, "Detect\r\n");
+			GSM_Prints(gsm, "Detect\r\n");
 			if (gsm->flags.detected == 0)
 			{
-				if(gsm->flags.detecting && gsm->flags.response.timeout == 0 && gsm->flags.response.available == 0) continue;
+				if(gsm->flags.detecting && gsm->flags.timeout_count == 0 && gsm->flags.response.available == 0) continue;
 
-				if(gsm->flags.timeout_count >= 5)
+				if(gsm->flags.timeout_count >= 7)
 				{
-					GSM_Prints(gsm, "Attempting to flood GSM\r\n");
-					for(uint8_t i = 0; i < 200; i++)
-					{
-						GSM_at(gsm, "AT\r\n", 0, 1000);
-					}
+					GSM_Prints(gsm, "Restarting STM\r\n");
+					NVIC_SystemReset();
 				}
 
 				gsm->flags.detecting = 1;
 				snprintf((char*)gsm->line_buf, GSM_LINE_BUFFER_SIZE, "GSM Dtct [%d]\r\n", gsm->flags.timeout_count + 1);
 				GSM_Prints(gsm, (char*)gsm->line_buf);
+
 				GSM_ChangeBaudRate(gsm);
+
+				GSM_SetTransparentAccessMode(gsm, 0);
+
 				GSM_at(gsm, "\r\nAT\r\n", 1, 1000);
 			}
 			else {
@@ -159,7 +165,7 @@ GSM_ERR GSM_Feed(gsm_t *gsm)
 		return GSM_OpenNetwork(gsm);
 	}
 
-	// UDP connection is opened
+	// TCP connection is opened
 	if (gsm->flags.connection_opened == 0) {
 		if (gsm->flags.connection_opening == 1) return GSM_BUSY;
 		return GSM_OpenConnection(gsm);
@@ -174,6 +180,10 @@ GSM_ERR GSM_AwaitResponse(gsm_t *gsm)
 	if (gsm->ft == NULL || gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
 
 	gsm->flags.response.awaiting = 1;
+
+	uint8_t timeout_paused;
+	if(FT_GetTimerPauseState(ft, gsm->timers.timeout, &timeout_paused) != FT_OK) return GSM_FT_ERR;
+	if(timeout_paused) FT_StartTimer(gsm->ft, gsm->timers.timeout);
 
 	while (gsm->flags.response.expected == 1 && gsm->flags.response.available == 0 && gsm->flags.response.timeout == 0)
 	{
@@ -244,6 +254,16 @@ GSM_ERR GSM_ProcessInput(gsm_t *gsm)
 				gsm->flags.response.has_command = 1;
 				gsm->flags.response.available = 1;
 			}
+			else if(gsm->line_buf_len >= 1 && strncmp((char*)gsm->line_buf, "CONNECT ", 8) == 0)
+			{
+				gsm->flags.response.has_connect = 1;
+				gsm->flags.response.available = 1;
+			}
+			else if(gsm->line_buf_len >= 1 && strncmp((char*)gsm->line_buf, "NO CARRIER", 10) == 0)
+			{
+				gsm->flags.response.has_no_carrier = 1;
+				gsm->flags.response.available = 1;
+			}
 			else if(gsm->line_buf_len >= 1 && strncmp((char*)gsm->line_buf, ">", 1) == 0)
 			{
 				gsm->flags.response.has_input_request = 1;
@@ -286,12 +306,11 @@ GSM_ERR GSM_InitModem(gsm_t *gsm)
 
 	gsm->flags.initializing = 1;
 
-	HAL_Delay(100);
-
 	GSM_Prints(gsm, "Initializing GSM Modem\r\n");
 
 	GSM_at(gsm, "ATE0\r\n", 1, 1000); // Echo off
 	GSM_AwaitResponse(gsm);
+
 	if(gsm->flags.response.has_ok == 0) {
 		gsm->flags.initializing = 0;
 		return GSM_AT_ERR;
@@ -304,6 +323,7 @@ GSM_ERR GSM_InitModem(gsm_t *gsm)
 		gsm->flags.initializing = 0;
 		return GSM_AT_ERR;
 	}
+	gsm->config.baud_rate = GSM_BAUD_RATE_921600;
 
 	GSM_at(gsm, "AT+CSCS=\"GSM\"\r\n", 1, 1000); // Set GSM character set
 	GSM_AwaitResponse(gsm);
@@ -386,6 +406,12 @@ GSM_ERR GSM_OpenNetwork(gsm_t *gsm)
 
 	GSM_Prints(gsm, "Opening network\r\n");
 
+	GSM_at(gsm, "AT+NETCLOSE\r\n", 1, 1000);
+	GSM_AwaitResponse(gsm);
+
+	GSM_at(gsm, "AT+CIPMODE=1\r\n", 1, 1000);
+	GSM_AwaitResponse(gsm);
+
 	//GSM_at(gsm, "AT+NETCLOSE\r\n", 1, 1000); // Close network
 
 	GSM_at(gsm, "AT+NETOPEN\r\n", 1, 1000); // Open network
@@ -417,10 +443,11 @@ GSM_ERR GSM_OpenConnection(gsm_t *gsm)
 
 	GSM_Prints(gsm, "Opening connection\r\n");
 
-	GSM_at(gsm, "AT+CIPOPEN=0,\"UDP\",,,3333\r\n", 1, 1000); // Open UDP connection
+	GSM_at(gsm, "AT+CIPOPEN=0,\"TCP\",\"62.93.47.98\",6969\r\n", 1, 1000); // Open TCP connection
 	GSM_AwaitResponse(gsm);
-	if (gsm->flags.response.has_command && GSM_CommandCompareName(gsm, "CIPOPEN") == GSM_OK
+	if ((gsm->flags.response.has_command && GSM_CommandCompareName(gsm, "CIPOPEN") == GSM_OK
 					&& (GSM_CommandCompareParameter(gsm, 1, "0") == GSM_OK || GSM_CommandCompareParameter(gsm, 1, "4") == GSM_OK))
+			|| gsm->flags.response.has_connect)
 	{
 		gsm->flags.connection_opening = 0;
 		gsm->flags.connection_opened = 1;
@@ -683,6 +710,90 @@ GSM_ERR GSM_CommandGetParameterFloat(gsm_t *gsm, uint16_t param_i, float* result
 	return GSM_OK;
 }
 
+GSM_ERR GSM_SetTransparentAccessMode(gsm_t *gsm, uint8_t state)
+{
+	if (gsm == NULL) return GSM_INVALID_ARGUMENT;
+
+	if(state)
+	{
+		GSM_at(gsm, "ATO\r\n", 1, 1000);
+		GSM_ERR err = GSM_AwaitResponse(gsm);
+		if (err != GSM_OK) return err;
+
+		if (gsm->flags.response.has_connect)
+		{
+			gsm->flags.transparent_mode = 1;
+			return GSM_OK;
+		}
+		else if (gsm->flags.response.has_no_carrier)
+		{
+			GSM_at(gsm, "AT+NETCLOSE\r\n", 1, 1000);
+			err = GSM_AwaitResponse(gsm);
+			if (err != GSM_TIMEOUT)
+			{
+				gsm->flags.connection_opened = 0;
+				gsm->flags.network_opened = 0;
+				GSM_at(gsm, "AT+CIPMODE=1\r\n", 1, 1000);
+				return GSM_OK;
+			}
+		}
+
+		return GSM_AT_ERR;
+	}
+	else
+	{
+		HAL_Delay(1000);
+		GSM_at(gsm, "+++", 1, 2000);
+		HAL_Delay(1000);
+
+		GSM_AwaitResponse(gsm);
+		if(gsm->flags.response.has_ok == 1)
+		{
+			gsm->flags.transparent_mode = 0;
+			return GSM_OK;
+		}
+		else return GSM_AT_ERR;
+	}
+
+
+	return GSM_OK;
+}
+
+GSM_ERR GSM_SendTCP(gsm_t *gsm, const uint8_t* data, uint16_t len)
+{
+	if (gsm == NULL || data == NULL || len == 0) return GSM_INVALID_ARGUMENT;
+	if (gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
+	if (gsm->flags.data_sending == 1) return GSM_BUSY;
+
+	gsm->flags.data_sending = 1;
+
+	snprintf((char*)gsm->line_buf, GSM_LINE_BUFFER_SIZE, "AT+CIPSEND=0,%u\r\n", len);
+	GSM_at(gsm, (char*)gsm->line_buf, 1, 1000);
+	GSM_AwaitResponse(gsm);
+	if(gsm->flags.response.has_input_request == 0)
+	{
+		gsm->flags.data_sending = 0;
+
+		return GSM_AT_ERR;
+	}
+
+	GSM_atData(gsm, data, len, 1, 3000);
+
+	GSM_AwaitResponse(gsm);
+	gsm->flags.data_sending = 0;
+	if(gsm->flags.response.has_ok == 0)
+	{
+		return GSM_AT_ERR;
+	}
+
+	return GSM_OK;
+}
+
+GSM_ERR GSM_SendTCPString(gsm_t *gsm, const char* str)
+{
+	return GSM_SendTCP(gsm, (const uint8_t*)str, strlen(str));
+}
+
 GSM_ERR GSM_SendUDP(gsm_t *gsm, const uint8_t* data, uint16_t len)
 {
 	if (gsm == NULL || data == NULL || len == 0) return GSM_INVALID_ARGUMENT;
@@ -701,14 +812,13 @@ GSM_ERR GSM_SendUDP(gsm_t *gsm, const uint8_t* data, uint16_t len)
 	}
 
 	GSM_atData(gsm, data, len, 1, 3000);
+
 	GSM_AwaitResponse(gsm);
+	gsm->flags.data_sending = 0;
 	if(gsm->flags.response.has_ok == 0)
 	{
-		gsm->flags.data_sending = 0;
 		return GSM_AT_ERR;
 	}
-
-	gsm->flags.data_sending = 0;
 
 	return GSM_OK;
 }

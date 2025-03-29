@@ -12,7 +12,7 @@ uint8_t UartRcvr_init(uart_receiver_t* uart_rcvr, UART_HandleTypeDef* huart)
 	if(uart_rcvr == NULL || huart == NULL) return 0;
 	UartRcvr_deinit(uart_rcvr);
 
-	uart_rcvr->buffer_active.data = (uint8_t*)malloc(UART_RECEIVER_CIRCULAR_BUFFER_SIZE);
+	uart_rcvr->buffer_active.data = (uint8_t*)malloc(UART_RECEIVER_CIRCULAR_BUFFER_SIZE + 1);
 	uart_rcvr->buffer_active.len = 0;
 	if (uart_rcvr->buffer_active.data == NULL)
 	{
@@ -20,7 +20,7 @@ uint8_t UartRcvr_init(uart_receiver_t* uart_rcvr, UART_HandleTypeDef* huart)
 		return 0;
 	}
 
-	uart_rcvr->buffer_pending.data = (uint8_t*)malloc(UART_RECEIVER_MAX_BUFFER_LENGTH);
+	uart_rcvr->buffer_pending.data = (uint8_t*)malloc(UART_RECEIVER_MAX_BUFFER_LENGTH + 1);
 	uart_rcvr->buffer_pending.len = 0;
 	if (uart_rcvr->buffer_pending.data == NULL)
 	{
@@ -38,10 +38,13 @@ void UartRcvr_deinit(uart_receiver_t *uart_rcvr)
 {
 	if(uart_rcvr == NULL) return;
 	if(uart_rcvr->buffer_active.data != NULL) free(uart_rcvr->buffer_active.data);
+	uart_rcvr->buffer_active.data = NULL;
 	if(uart_rcvr->buffer_pending.data != NULL) free(uart_rcvr->buffer_pending.data);
+	uart_rcvr->buffer_pending.data = NULL;
 	for (uint8_t i = 0; i < UART_RECEIVER_MAX_BUFFERS; i++)
 	{
 		if(uart_rcvr->buffers[i].data != NULL) free(uart_rcvr->buffers[i].data);
+		uart_rcvr->buffers[i].data = NULL;
 	}
 	memset(uart_rcvr, 0, sizeof(uart_receiver_t));
 }
@@ -80,8 +83,12 @@ uint16_t UartRcvr_get_input(uart_receiver_t *uart_rcvr, uint8_t* str, uint16_t m
 
 	if(len == uart_rcvr->buffers[uart_rcvr->buffer_index_pending].len || str == NULL)
 	{
-		free(uart_rcvr->buffers[uart_rcvr->buffer_index_pending].data);
-		uart_rcvr->buffers[uart_rcvr->buffer_index_pending].data = NULL;
+		if (uart_rcvr->buffers[uart_rcvr->buffer_index_pending].data != NULL)
+		{
+			free(uart_rcvr->buffers[uart_rcvr->buffer_index_pending].data);
+			uart_rcvr->buffers[uart_rcvr->buffer_index_pending].data = NULL;
+		}
+
 	}
 	return len;
 }
@@ -148,7 +155,7 @@ void UartRcvr_it_swap(uart_receiver_t *uart_rcvr)
 	uint16_t next_index = (uart_rcvr->buffer_index_active + 1) % UART_RECEIVER_MAX_BUFFERS;
 	if (uart_rcvr->buffers[next_index].data != NULL) return;
 
-	uart_rcvr->buffers[next_index].data = (uint8_t*)malloc(uart_rcvr->buffer_pending.len + 1);
+	uart_rcvr->buffers[next_index].data = (uint8_t*)malloc(uart_rcvr->buffer_pending.len + 5);
 	if (uart_rcvr->buffers[next_index].data == NULL) return;
 
 	memcpy(uart_rcvr->buffers[next_index].data, uart_rcvr->buffer_pending.data, uart_rcvr->buffer_pending.len);

@@ -1,6 +1,6 @@
 ################################################################################
 # Automatically-generated file. Do not edit!
-# Toolchain: GNU Tools for STM32 (12.3.rel1)
+# Toolchain: GNU Tools for STM32 (13.3.rel1)
 ################################################################################
 
 ELF_SRCS := 
@@ -26,6 +26,7 @@ Core/Src \
 Core/Startup \
 Core/circular_buffers \
 Core/fancy_timer \
+Core/fancy_timer/stm32-easy-timers \
 Core/frame_collector \
 Core/gsm \
 Core/uart_receiver \

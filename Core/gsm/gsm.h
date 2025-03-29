@@ -65,6 +65,9 @@ typedef struct {
 	uint8_t has_input_request;
 	uint8_t has_unknown;
 
+	uint8_t has_connect;
+	uint8_t has_no_carrier;
+
 	uint8_t command_buf[GSM_COMMAND_BUFFER_SIZE];
 	uint16_t command_buf_len;
 	uint16_t command_buf_name_len;
@@ -101,6 +104,7 @@ typedef struct {
 	gsm_flags_response_t response;
 	uint16_t timeout_count;
 
+	uint8_t transparent_mode;
 } gsm_flags_t;
 
 typedef struct {
@@ -166,6 +170,11 @@ GSM_ERR GSM_CommandCompareParameter(gsm_t *gsm, uint16_t param_i, const char* st
 GSM_ERR GSM_CommandGetParameter(gsm_t *gsm, uint16_t param_i, char* buf, uint16_t buf_len, uint16_t* param_len);
 GSM_ERR GSM_CommandGetParameterInt(gsm_t *gsm, uint16_t param_i, int32_t* result);
 GSM_ERR GSM_CommandGetParameterFloat(gsm_t *gsm, uint16_t param_i, float* result);
+
+GSM_ERR GSM_SetTransparentAccessMode(gsm_t *gsm, uint8_t state);
+
+GSM_ERR GSM_SendTCP(gsm_t *gsm, const uint8_t* data, uint16_t len);
+GSM_ERR GSM_SendTCPString(gsm_t *gsm, const char* str);
 
 GSM_ERR GSM_SendUDP(gsm_t *gsm, const uint8_t* data, uint16_t len);
 GSM_ERR GSM_SendUDPString(gsm_t *gsm, const char* str);

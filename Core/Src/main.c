@@ -24,6 +24,7 @@
 #include "tim.h"
 #include "usart.h"
 #include "gpio.h"
+#include "fmc.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
@@ -73,11 +74,11 @@ uint8_t can_rx_data[8];
 
 can_frames_cb_t can_frames_cb = {0};
 
-#define UDP_BUFFER_SIZE 500
-#define UDP_BUFFER_COUNT 10
+#define UDP_BUFFER_SIZE 1490
+#define UDP_BUFFER_COUNT 5
 
 typedef struct {
-	uint8_t data[UDP_BUFFER_SIZE];
+	uint8_t data[UDP_BUFFER_SIZE + 1];
 	uint16_t len;
 } udp_buffer_t;
 
@@ -141,13 +142,14 @@ int main(void)
   MX_CAN1_Init();
   MX_CAN2_Init();
   MX_RTC_Init();
+  MX_FMC_Init();
   /* USER CODE BEGIN 2 */
 
 	UartRcvr_init(&usart1_rcvr, &huart1);
 	UartRcvr_init(&usart2_rcvr, &huart2);
 	UartRcvr_init(&uart7_rcvr, &huart7);
 
-	prints("PRz Telemetry Box 4.0\r\n");
+	prints("PRz Telemetry Box 4.1\r\n");
 
 	HAL_Delay(1000);
 
@@ -234,10 +236,11 @@ int main(void)
 		{
 			if (udp_buffer_head != udp_buffer_tail)
 			{
-				GSM_SendUDP(&gsm, udp_buffer[udp_buffer_tail].data, udp_buffer[udp_buffer_tail].len);
+				GSM_SendTCP(&gsm, udp_buffer[udp_buffer_tail].data, udp_buffer[udp_buffer_tail].len);
 				udp_buffer_tail = (udp_buffer_tail + 1) % UDP_BUFFER_COUNT;
 			}
-			//GSM_SendUDPString(&gsm, "ABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZ");
+//			HAL_Delay(500);
+//			GSM_SendTCPString(&gsm, "ABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZabcdefghijklmnopqrstuvwxzABCDEFGHIJKLMNOPRSTUVWXYZ");
 		}
 
 		if(UartRcvr_available(&usart1_rcvr))
