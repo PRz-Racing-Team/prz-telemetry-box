@@ -46,9 +46,9 @@ GSM_ERR GSM_atData(gsm_t *gsm, const uint8_t* at_cmd, uint16_t len, uint8_t resp
 	if (gsm == NULL || at_cmd == NULL) return GSM_INVALID_ARGUMENT;
 	if (gsm->ft == NULL || gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
 
-	GSM_Prints(gsm, ">> ");
-	GSM_PrintsData(gsm, at_cmd, len);
-	GSM_Prints(gsm, "\r\n");
+//	GSM_Prints(gsm, ">> ");
+//	GSM_PrintsData(gsm, at_cmd, len);
+//	GSM_Prints(gsm, "\r\n");
 
 	FT_StopTimer(gsm->ft, gsm->timers.timeout);
 	GSM_ClearResponse(gsm);
@@ -79,6 +79,11 @@ GSM_ERR GSM_Feed(gsm_t *gsm)
 
 	GSM_ERR err = GSM_ProcessInput(gsm);
 	if (err != GSM_OK) return err;
+
+	if(gsm->flags.response.available && gsm->flags.connection_opened)
+	{
+		gsm->flags.connection_opened = 0;
+	}
 
 	FT_ERR ft_err = FT_Feed(gsm->ft);
 	while (ft_err == FT_TRIGGERED && FT_GetTriggeredTimer(gsm->ft, &gsm->timer_id, &gsm->timer_trigger_count) == FT_OK)
@@ -402,6 +407,7 @@ GSM_ERR GSM_OpenNetwork(gsm_t *gsm)
 	if (gsm == NULL) return GSM_INVALID_ARGUMENT;
 	if (gsm->ft == NULL || gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
 
+	gsm->flags.network_opened = 0;
 	gsm->flags.network_opening = 1;
 
 	GSM_Prints(gsm, "Opening network\r\n");
@@ -445,16 +451,32 @@ GSM_ERR GSM_OpenConnection(gsm_t *gsm)
 
 	GSM_at(gsm, "AT+CIPOPEN=0,\"TCP\",\"62.93.47.98\",6969\r\n", 1, 1000); // Open TCP connection
 	GSM_AwaitResponse(gsm);
-	if ((gsm->flags.response.has_command && GSM_CommandCompareName(gsm, "CIPOPEN") == GSM_OK
-					&& (GSM_CommandCompareParameter(gsm, 1, "0") == GSM_OK || GSM_CommandCompareParameter(gsm, 1, "4") == GSM_OK))
-			|| gsm->flags.response.has_connect)
+	if (gsm->flags.response.has_connect || (
+			gsm->flags.response.has_command
+			&& GSM_CommandCompareName(gsm, "CIPOPEN") == GSM_OK
+			&& GSM_CommandCompareParameter(gsm, 1, "0") == GSM_OK
+		))
 	{
 		gsm->flags.connection_opening = 0;
 		gsm->flags.connection_opened = 1;
 
-		if (GSM_CommandCompareParameter(gsm, 1, "0") == GSM_OK) GSM_Prints(gsm, "Connection opened\r\n");
-		else GSM_Prints(gsm, "Connection was already opened\r\n");
+		if (gsm->flags.response.has_command && GSM_CommandCompareParameter(gsm, 1, "0") == GSM_OK)
+		{
+			GSM_Prints(gsm, "Connection opened\r\n");
+		}
+		else
+		{
+			GSM_Prints(gsm, "Connection was already opened\r\n");
+		}
+
+		GSM_ClearResponse(gsm);
 		return GSM_OK;
+	}
+	else
+	{
+		GSM_at(gsm, "AT+NETCLOSE\r\n", 1, 1000);
+		GSM_AwaitResponse(gsm);
+		gsm->flags.network_opened = 0;
 	}
 
 	gsm->flags.connection_opening = 0;
@@ -765,26 +787,18 @@ GSM_ERR GSM_SendTCP(gsm_t *gsm, const uint8_t* data, uint16_t len)
 	if (gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
 	if (gsm->flags.data_sending == 1) return GSM_BUSY;
 
+	GSM_ClearResponse(gsm);
+
 	gsm->flags.data_sending = 1;
 
-	snprintf((char*)gsm->line_buf, GSM_LINE_BUFFER_SIZE, "AT+CIPSEND=0,%u\r\n", len);
-	GSM_at(gsm, (char*)gsm->line_buf, 1, 1000);
-	GSM_AwaitResponse(gsm);
-	if(gsm->flags.response.has_input_request == 0)
-	{
-		gsm->flags.data_sending = 0;
+	GSM_atData(gsm, data, len, 0, 0);
 
-		return GSM_AT_ERR;
-	}
-
-	GSM_atData(gsm, data, len, 1, 3000);
-
-	GSM_AwaitResponse(gsm);
 	gsm->flags.data_sending = 0;
-	if(gsm->flags.response.has_ok == 0)
-	{
-		return GSM_AT_ERR;
-	}
+
+
+	GSM_at(gsm, "AT\r\n", 0, 0);
+
+	GSM_Feed(gsm);
 
 	return GSM_OK;
 }
