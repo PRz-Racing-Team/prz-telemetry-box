@@ -29,10 +29,14 @@
 #define GSM_TIMER_DETECT_INTERVAL 						5000 	// 0.5 s -> 2 Hz
 #define GSM_TIMER_DETECT_PRIORITY 						80
 
+#define GSM_BAUD_RATE_DEFAULT_SPEED						115200
+#define GSM_BAUD_RATE_FAST_SPEED						921600
+#define GSM_BAUD_RATE_VERY_FAST_SPEED					3000000
 
 typedef enum {
-	GSM_BAUD_RATE_115200,
-	GSM_BAUD_RATE_921600
+	GSM_BAUD_RATE_DEFAULT,
+	GSM_BAUD_RATE_FAST,
+	GSM_BAUD_RATE_VERY_FAST
 } gsm_baud_rate_t;
 
 typedef struct {
@@ -133,6 +137,7 @@ typedef struct {
 	FT_base *ft;
 	uart_receiver_t *uart_rcvr_gsm;
 	uart_receiver_t *uart_rcvr_debug;
+	uart_receiver_t *uart_rcvr_esp;
 } gsm_t;
 
 GSM_ERR GSM_cmd(gsm_t *gsm, const uint8_t* cmd, uint16_t cmd_len);
@@ -156,7 +161,7 @@ GSM_ERR GSM_OpenConnection(gsm_t *gsm);
 GSM_ERR GSM_SetBaudRate(gsm_t *gsm, gsm_baud_rate_t baud_rate);
 GSM_ERR GSM_ChangeBaudRate(gsm_t *gsm);
 
-GSM_ERR GSM_Init(gsm_t *gsm, FT_base *ft, uart_receiver_t *uart_rcvr_gsm, uart_receiver_t *uart_rcvr_debug);
+GSM_ERR GSM_Init(gsm_t *gsm, FT_base *ft, uart_receiver_t *uart_rcvr_gsm, uart_receiver_t *uart_rcvr_debug, uart_receiver_t *uart_rcvr_esp);
 GSM_ERR GSM_DeInit(gsm_t *gsm);
 
 GSM_ERR GSM_ClearResponse(gsm_t *gsm);

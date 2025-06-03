@@ -1,8 +1,9 @@
 ../Drivers/CMSIS/Include/core_cm4.h:1938:34:__NVIC_SystemReset	1
-../Core/Src/main.c:112:5:main	17
-../Core/Src/main.c:298:6:SystemClock_Config	4
-../Core/Src/main.c:350:6:HAL_CAN_RxFifo0MsgPendingCallback	3
-../Core/Src/main.c:368:6:HAL_UARTEx_RxEventCallback	7
-../Core/Src/main.c:396:6:HAL_UART_ErrorCallback	4
-../Core/Src/main.c:407:19:prints	1
-../Core/Src/main.c:421:6:Error_Handler	0
+../Core/Src/main.c:131:10:crc16	2
+../Core/Src/main.c:169:5:main	13
+../Core/Src/main.c:404:6:SystemClock_Config	4
+../Core/Src/main.c:456:6:HAL_CAN_RxFifo0MsgPendingCallback	3
+../Core/Src/main.c:470:6:HAL_UARTEx_RxEventCallback	7
+../Core/Src/main.c:498:6:HAL_UART_ErrorCallback	4
+../Core/Src/main.c:509:19:prints	1
+../Core/Src/main.c:523:6:Error_Handler	0

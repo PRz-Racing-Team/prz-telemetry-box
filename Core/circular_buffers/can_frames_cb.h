@@ -14,18 +14,20 @@
 
 #include <cmsis_gcc.h>
 
-#define GCB_MAX_CAN_FRAMES 32
+#define GCB_MAX_CAN_FRAMES 8192
 
 typedef struct {
 	uint16_t id;
 	uint8_t len;
+	uint32_t counter;
 	uint8_t data[8];
 } can_frame_t;
 
 typedef struct {
-	can_frame_t* elements[GCB_MAX_CAN_FRAMES];
+	can_frame_t elements[GCB_MAX_CAN_FRAMES];
 	uint16_t head;
 	uint16_t tail;
+	uint32_t counter;
 } can_frames_cb_t;
 
 uint8_t CFCB_Init(can_frames_cb_t *cfcb);

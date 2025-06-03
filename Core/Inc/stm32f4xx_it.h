@@ -28,6 +28,7 @@ extern "C" {
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 
+#include "../uart_receiver/uart_receiver.h"
 #include "usart.h"
 
 /* USER CODE END Includes */

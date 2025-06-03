@@ -12,6 +12,11 @@ GSM_ERR GSM_cmd(gsm_t *gsm, const uint8_t* cmd, uint16_t cmd_len)
 	if(gsm == NULL) return GSM_INVALID_ARGUMENT;
 	if(gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
 	HAL_StatusTypeDef status = UartRcvr_send(gsm->uart_rcvr_gsm, cmd, cmd_len);
+	// TODO: ESP dump, is way slower than GSM. Might decrease speed
+//	if (gsm->uart_rcvr_esp != NULL)
+//	{
+//		UartRcvr_send(gsm->uart_rcvr_esp, cmd, cmd_len);
+//	}
 	return status == HAL_OK ? GSM_OK : GSM_HAL_ERR;
 }
 
@@ -237,6 +242,7 @@ GSM_ERR GSM_ProcessInput(gsm_t *gsm)
 			{
 				gsm->flags.response.has_ok = 1;
 				gsm->flags.detected = 1;
+				FT_PauseTimer(gsm->ft, gsm->timers.detect);
 				gsm->flags.response.available = 1;
 			}
 			else if (gsm->line_buf_len >= 5 && strncmp((char*)gsm->line_buf, "ERROR", 5) == 0)
@@ -321,14 +327,14 @@ GSM_ERR GSM_InitModem(gsm_t *gsm)
 		return GSM_AT_ERR;
 	}
 
-	GSM_at(gsm, "AT+IPR=921600\r\n", 1, 1000); // Set baud rate to 921600
-	GSM_SetBaudRate(gsm, GSM_BAUD_RATE_921600);
+	snprintf((char*)gsm->line_buf, GSM_LINE_BUFFER_SIZE, "AT+IPR=%d\r\n", GSM_BAUD_RATE_VERY_FAST_SPEED);
+	GSM_at(gsm, (char*)gsm->line_buf, 1, 1000); // Set baud rate to VERY FAST
+	GSM_SetBaudRate(gsm, GSM_BAUD_RATE_VERY_FAST);
 	GSM_AwaitResponse(gsm);
 	if(gsm->flags.response.has_ok == 0) {
 		gsm->flags.initializing = 0;
 		return GSM_AT_ERR;
 	}
-	gsm->config.baud_rate = GSM_BAUD_RATE_921600;
 
 	GSM_at(gsm, "AT+CSCS=\"GSM\"\r\n", 1, 1000); // Set GSM character set
 	GSM_AwaitResponse(gsm);
@@ -470,6 +476,10 @@ GSM_ERR GSM_OpenConnection(gsm_t *gsm)
 		}
 
 		GSM_ClearResponse(gsm);
+		FT_PauseTimer(gsm->ft, gsm->timers.detect);
+		gsm->flags.detecting = 0;
+		gsm->flags.detected = 1;
+
 		return GSM_OK;
 	}
 	else
@@ -490,13 +500,17 @@ GSM_ERR GSM_SetBaudRate(gsm_t *gsm, gsm_baud_rate_t baud_rate)
 
 	uint32_t baud_rate_val = 0;
 	switch (baud_rate) {
-		case GSM_BAUD_RATE_115200:
-			baud_rate_val = 115200;
-			GSM_Prints(gsm, "Setting baud rate to 115200\r\n");
+		case GSM_BAUD_RATE_DEFAULT:
+			baud_rate_val = GSM_BAUD_RATE_DEFAULT_SPEED;
+			GSM_Prints(gsm, "Setting baud rate to DEFAULT\r\n");
 			break;
-		case GSM_BAUD_RATE_921600:
-			baud_rate_val = 921600;
-			GSM_Prints(gsm, "Setting baud rate to 921600\r\n");
+		case GSM_BAUD_RATE_FAST:
+			baud_rate_val = GSM_BAUD_RATE_FAST_SPEED;
+			GSM_Prints(gsm, "Setting baud rate to FAST\r\n");
+			break;
+		case GSM_BAUD_RATE_VERY_FAST:
+			baud_rate_val = GSM_BAUD_RATE_VERY_FAST_SPEED;
+			GSM_Prints(gsm, "Setting baud rate to VERY FAST\r\n");
 			break;
 		default:
 			return GSM_INVALID_ARGUMENT;
@@ -514,20 +528,36 @@ GSM_ERR GSM_ChangeBaudRate(gsm_t *gsm)
 	if(gsm == NULL) return GSM_INVALID_ARGUMENT;
 	if(gsm->uart_rcvr_gsm == NULL) return GSM_NOT_INITIALIZED;
 
-	gsm_baud_rate_t new_baud_rate = gsm->config.baud_rate == GSM_BAUD_RATE_115200 ? GSM_BAUD_RATE_921600 : GSM_BAUD_RATE_115200;
+	gsm_baud_rate_t new_baud_rate = GSM_BAUD_RATE_DEFAULT;
+
+	switch (gsm->config.baud_rate)
+	{
+	case GSM_BAUD_RATE_DEFAULT:
+		new_baud_rate = GSM_BAUD_RATE_VERY_FAST;
+		break;
+//	case GSM_BAUD_RATE_VERY_FAST:
+//		new_baud_rate = GSM_BAUD_RATE_FAST;	// for backward compatibility with GSM modules that were set to 921600 (FAST) before
+//		break;
+//	case GSM_BAUD_RATE_FAST:
+	default:
+	case GSM_BAUD_RATE_VERY_FAST:
+		new_baud_rate = GSM_BAUD_RATE_DEFAULT;
+		break;
+	}
 
 	return GSM_SetBaudRate(gsm, new_baud_rate);
 }
 
-GSM_ERR GSM_Init(gsm_t *gsm, FT_base *ft, uart_receiver_t *uart_rcvr_gsm, uart_receiver_t *uart_rcvr_debug)
+GSM_ERR GSM_Init(gsm_t *gsm, FT_base *ft, uart_receiver_t *uart_rcvr_gsm, uart_receiver_t *uart_rcvr_debug, uart_receiver_t *pawua_pojebao)
 {
 	if (gsm == NULL || ft == NULL || uart_rcvr_gsm == NULL) return GSM_INVALID_ARGUMENT;
 
 	gsm->ft = ft;
 	gsm->uart_rcvr_gsm = uart_rcvr_gsm;
 	gsm->uart_rcvr_debug = uart_rcvr_debug;
+	gsm->uart_rcvr_esp = pawua_pojebao;
 
-	gsm->config.baud_rate = GSM_BAUD_RATE_115200;
+	gsm->config.baud_rate = GSM_BAUD_RATE_DEFAULT;
 
 	FT_ERR ft_err = FT_OK;
 
@@ -791,12 +821,10 @@ GSM_ERR GSM_SendTCP(gsm_t *gsm, const uint8_t* data, uint16_t len)
 
 	gsm->flags.data_sending = 1;
 
+	GSM_at(gsm, "AT\r\n", 0, 0);
 	GSM_atData(gsm, data, len, 0, 0);
 
 	gsm->flags.data_sending = 0;
-
-
-	GSM_at(gsm, "AT\r\n", 0, 0);
 
 	GSM_Feed(gsm);
 

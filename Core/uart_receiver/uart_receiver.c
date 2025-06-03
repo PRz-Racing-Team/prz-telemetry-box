@@ -96,6 +96,9 @@ uint16_t UartRcvr_get_input(uart_receiver_t *uart_rcvr, uint8_t* str, uint16_t m
 uint8_t UartRcvr_set_baud_rate(uart_receiver_t *uart_rcvr, uint32_t baud_rate)
 {
 	if(uart_rcvr == NULL || uart_rcvr->huart == NULL) return 0;
+    if (baud_rate < 300) {
+		return 0;
+	}
 
 	uint32_t pclk;
 	if (uart_rcvr->huart->Instance == USART1 || uart_rcvr->huart->Instance == USART6) {
@@ -105,11 +108,64 @@ uint8_t UartRcvr_set_baud_rate(uart_receiver_t *uart_rcvr, uint32_t baud_rate)
 		// USART2, USART3, UART4, UART5 are on APB1
 		pclk = HAL_RCC_GetPCLK1Freq();
 	}
-    uint32_t usartdiv = (pclk + (baud_rate / 2)) / baud_rate;
 
     UART_HandleTypeDef* huart = uart_rcvr->huart;
     USART_TypeDef* instance = huart->Instance;
 
+    const uint8_t over8 = (instance->CR1 & USART_CR1_OVER8) == USART_CR1_OVER8;
+	const uint32_t oversampling = over8 ? 8 : 16;
+	const uint32_t divisor = oversampling * baud_rate;
+
+	// Check for baud rate too high (divisor < 1)
+	if (divisor > pclk) {
+		return 0;
+	}
+
+	const uint32_t integer_part = pclk / divisor;
+	const uint32_t remainder = pclk % divisor;
+
+	uint32_t fraction_bits;
+
+    uint16_t brr;
+
+	if (!over8) { // 16x oversampling mode
+		// Calculate fraction with rounding to nearest 1/16
+		fraction_bits = (remainder * 16 + divisor / 2) / divisor;
+
+		// Handle overflow in fractional part
+		if (fraction_bits > 15) {
+			// Check for integer overflow before applying carry
+			if (integer_part + 1 > 0xFFF) {
+				return 0;
+			}
+			brr = (uint16_t)((integer_part + 1) << 4);
+		} else {
+			// Check for valid integer part range
+			if (integer_part > 0xFFF) {
+				return 0;
+			}
+			brr = (uint16_t)((integer_part << 4) | fraction_bits);
+		}
+	} else { // 8x oversampling mode
+		// Calculate fraction with rounding to nearest 1/8
+		fraction_bits = (remainder * 8 + divisor / 2) / divisor;
+
+		// Handle overflow in fractional part
+		if (fraction_bits >= 8) {
+			fraction_bits -= 8;
+			// Check for integer overflow before applying carry
+			if (integer_part + 1 > 0xFFF) {
+				return 0;
+			}
+			brr = (uint16_t)(((integer_part + 1) << 4) | fraction_bits);
+		} else {
+			// Check for valid integer part range
+			if (integer_part > 0xFFF) {
+				return 0;
+			}
+			brr = (uint16_t)((integer_part << 4) | fraction_bits);
+		}
+	}
 
     while(__HAL_UART_GET_FLAG(huart, UART_FLAG_TXE) == RESET); // wait for transmission complete
 
@@ -118,7 +174,7 @@ uint8_t UartRcvr_set_baud_rate(uart_receiver_t *uart_rcvr, uint32_t baud_rate)
 	(void)(instance->CR1); // read-back
 	__DMB();
 
-    instance->BRR = usartdiv;
+    instance->BRR = brr;
     __DSB();
     (void)(instance->BRR);
     __DMB();

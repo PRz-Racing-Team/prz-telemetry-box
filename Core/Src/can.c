@@ -40,13 +40,13 @@ void MX_CAN1_Init(void)
   /* USER CODE END CAN1_Init 1 */
   hcan1.Instance = CAN1;
   hcan1.Init.Prescaler = 3;
-  hcan1.Init.Mode = CAN_MODE_NORMAL;
+  hcan1.Init.Mode = CAN_MODE_SILENT;
   hcan1.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan1.Init.TimeSeg1 = CAN_BS1_12TQ;
   hcan1.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan1.Init.TimeTriggeredMode = DISABLE;
-  hcan1.Init.AutoBusOff = DISABLE;
-  hcan1.Init.AutoWakeUp = DISABLE;
+  hcan1.Init.AutoBusOff = ENABLE;
+  hcan1.Init.AutoWakeUp = ENABLE;
   hcan1.Init.AutoRetransmission = ENABLE;
   hcan1.Init.ReceiveFifoLocked = DISABLE;
   hcan1.Init.TransmitFifoPriority = DISABLE;
@@ -62,9 +62,9 @@ void MX_CAN1_Init(void)
 	canFilterConfig.FilterActivation = CAN_FILTER_ENABLE;
 	canFilterConfig.FilterBank = 0;
 	canFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
-	canFilterConfig.FilterIdHigh = 0x3F0 << 5;
+	canFilterConfig.FilterIdHigh = 0x000 << 5;
 	canFilterConfig.FilterIdLow = 0x0000;
-	canFilterConfig.FilterMaskIdHigh = 0xFFF << 5;
+	canFilterConfig.FilterMaskIdHigh = 0x000 << 5;
 	canFilterConfig.FilterMaskIdLow = 0x0000;
 	canFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
 	canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
@@ -94,14 +94,14 @@ void MX_CAN2_Init(void)
   /* USER CODE END CAN2_Init 1 */
   hcan2.Instance = CAN2;
   hcan2.Init.Prescaler = 3;
-  hcan2.Init.Mode = CAN_MODE_NORMAL;
+  hcan2.Init.Mode = CAN_MODE_SILENT;
   hcan2.Init.SyncJumpWidth = CAN_SJW_1TQ;
   hcan2.Init.TimeSeg1 = CAN_BS1_12TQ;
   hcan2.Init.TimeSeg2 = CAN_BS2_2TQ;
   hcan2.Init.TimeTriggeredMode = DISABLE;
-  hcan2.Init.AutoBusOff = DISABLE;
-  hcan2.Init.AutoWakeUp = DISABLE;
-  hcan2.Init.AutoRetransmission = DISABLE;
+  hcan2.Init.AutoBusOff = ENABLE;
+  hcan2.Init.AutoWakeUp = ENABLE;
+  hcan2.Init.AutoRetransmission = ENABLE;
   hcan2.Init.ReceiveFifoLocked = DISABLE;
   hcan2.Init.TransmitFifoPriority = DISABLE;
   if (HAL_CAN_Init(&hcan2) != HAL_OK)
@@ -115,9 +115,9 @@ void MX_CAN2_Init(void)
 	canFilterConfig.FilterActivation = CAN_FILTER_ENABLE;
 	canFilterConfig.FilterBank = 14;
 	canFilterConfig.FilterFIFOAssignment = CAN_RX_FIFO0;
-	canFilterConfig.FilterIdHigh = 0x300 << 5;
+	canFilterConfig.FilterIdHigh = 0x000 << 5;
 	canFilterConfig.FilterIdLow = 0x0000;
-	canFilterConfig.FilterMaskIdHigh = 0xF00 << 5;
+	canFilterConfig.FilterMaskIdHigh = 0x000 << 5;
 	canFilterConfig.FilterMaskIdLow = 0x0000;
 	canFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
 	canFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
