@@ -93,11 +93,11 @@ GSM_ERR GSM_Feed(gsm_t *gsm)
 	FT_ERR ft_err = FT_Feed(gsm->ft);
 	while (ft_err == FT_TRIGGERED && FT_GetTriggeredTimer(gsm->ft, &gsm->timer_id, &gsm->timer_trigger_count) == FT_OK)
 	{
-//		if(gsm->timer_id == gsm->timers.time_counter)
-//		{
-//			gsm->time += gsm->timer_trigger_count;
-//		}
-		if (gsm->timer_id == gsm->timers.timeout)
+		if(gsm->timer_id == gsm->timers.time_counter)
+		{
+			gsm->time_count += gsm->timer_trigger_count;
+		}
+		else if (gsm->timer_id == gsm->timers.timeout)
 		{
 			GSM_Prints(gsm, "Timeout\r\n");
 			gsm->flags.response.timeout = 1;
@@ -565,6 +565,7 @@ GSM_ERR GSM_Init(gsm_t *gsm, FT_base *ft, uart_receiver_t *uart_rcvr_gsm, uart_r
 	FT_StopTimer(ft, gsm->timers.timeout);
 
 	if(ft_err == FT_OK) ft_err = FT_NewTimer(ft, GSM_TIMER_DETECT_INTERVAL, GSM_TIMER_DETECT_PRIORITY, &gsm->timers.detect);
+	if(ft_err == FT_OK) ft_err = FT_NewTimer(ft, GSM_TIMER_TIME_COUNTER_INTERVAL, GSM_TIMER_TIME_COUNTER_PRIORITY, &gsm->timers.time_counter);
 
 	if (ft_err != FT_OK) {
 		GSM_DeInit(gsm);

@@ -265,6 +265,8 @@ int main(void)
 
 	can_frame_t can_frame;
 	uint8_t data_frame[16];
+	uint32_t last_interface_announcement = 0;
+	uint8_t can_silenced = 0;
 	while (1)
 	{
 		gsm_err = GSM_Feed(&gsm);
@@ -274,6 +276,28 @@ int main(void)
 			{
 				prints("\r\n! can_frame.len > 8 !\r\n");
 				continue;
+			}
+
+			if (can_frame.id == 0x3E6)
+			{
+				// CAN go silent mode
+				prints("CAN go silent mode\r\n");
+				hcan2.Instance->MCR |= CAN_MCR_INRQ; // request to enter initialization mode
+				while ((hcan2.Instance->MSR & CAN_MSR_INAK) == 0); // wait for initialization mode
+				hcan2.Instance->BTR |= CAN_BTR_SILM;
+				hcan2.Instance->MCR &= ~CAN_MCR_INRQ; // exit initialization mode
+				can_silenced = 1;
+				last_interface_announcement = gsm.time_count;
+			}
+			else if(can_silenced && gsm.time_count - last_interface_announcement > 50) // 5s
+			{
+				// CAN go silent mode
+				prints("CAN go BRRRR\r\n");
+				hcan2.Instance->MCR |= CAN_MCR_INRQ; // request to enter initialization mode
+				while ((hcan2.Instance->MSR & CAN_MSR_INAK) == 0); // wait for initialization mode
+				hcan2.Instance->BTR &= ~CAN_BTR_SILM;
+				hcan2.Instance->MCR &= ~CAN_MCR_INRQ; // exit initialization mode
+				can_silenced = 0;
 			}
 
 			if(gsm_err == GSM_IDLE)
@@ -458,7 +482,10 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan)
 	if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &can_rx_header, can_rx_data) == HAL_OK)
 	{
 		can_frames_cb.counter++;
-
+//		char str_illegal[8];
+//		snprintf(str_illegal, 8, "%03x\r\n", (uint16_t)(can_rx_header.StdId));
+//		prints(str_illegal);
+//		prints("_");
 		if(CFCB_Push(&can_frames_cb, can_rx_header.StdId, can_rx_header.DLC, can_rx_data) == 0)
 		{
 			prints(".");

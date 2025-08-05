@@ -29,6 +29,9 @@
 #define GSM_TIMER_DETECT_INTERVAL 						5000 	// 0.5 s -> 2 Hz
 #define GSM_TIMER_DETECT_PRIORITY 						80
 
+#define GSM_TIMER_TIME_COUNTER_INTERVAL					1000	// 0.1 s -> 10Hz
+#define GSM_TIMER_TIME_COUNTER_PRIORITY					50
+
 #define GSM_BAUD_RATE_DEFAULT_SPEED						115200
 #define GSM_BAUD_RATE_FAST_SPEED						921600
 #define GSM_BAUD_RATE_VERY_FAST_SPEED					3000000
@@ -40,7 +43,7 @@ typedef enum {
 } gsm_baud_rate_t;
 
 typedef struct {
-//	uint16_t time_counter;
+	uint16_t time_counter;
 	uint16_t timeout;
 	uint16_t detect;
 } gsm_ft_timers_t;
@@ -132,7 +135,7 @@ typedef struct {
 	uint8_t sms_buf[GSM_SMS_BUFFER_SIZE];
 	uint16_t sms_buf_len;
 
-	//uint64_t time;
+	uint32_t time_count;
 
 	FT_base *ft;
 	uart_receiver_t *uart_rcvr_gsm;
